@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clawdalf's Board</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #a29bfe, #74b9ff, #81ecec);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #a0a0a0;
+            font-style: italic;
+        }
+        
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .section-icon {
+            font-size: 1.5rem;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .task {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #74b9ff;
+            transition: transform 0.2s, background 0.2s;
+        }
+        
+        .task:hover {
+            background: rgba(255, 255, 255, 0.07);
+            transform: translateX(5px);
+        }
+        
+        .task.done {
+            border-left-color: #55efc4;
+            opacity: 0.8;
+        }
+        
+        .task.idea {
+            border-left-color: #fdcb6e;
+        }
+        
+        .task.pinned {
+            border-left-color: #e17055;
+            background: rgba(225, 112, 85, 0.1);
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 5px;
+        }
+        
+        .task-title {
+            font-weight: 500;
+            flex: 1;
+        }
+        
+        .task-time {
+            font-size: 0.8rem;
+            color: #888;
+            white-space: nowrap;
+            margin-left: 10px;
+        }
+        
+        .task-desc {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .status-active {
+            background: rgba(116, 185, 255, 0.2);
+            color: #74b9ff;
+        }
+        
+        .status-done {
+            background: rgba(85, 239, 196, 0.2);
+            color: #55efc4;
+        }
+        
+        .notes-section {
+            background: rgba(162, 155, 254, 0.1);
+            border: 1px solid rgba(162, 155, 254, 0.2);
+        }
+        
+        .note {
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .note:last-child {
+            border-bottom: none;
+        }
+        
+        .note-time {
+            font-size: 0.8rem;
+            color: #a29bfe;
+            margin-bottom: 5px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <header>
+            <h1>🧙‍♂️ Clawdalf's Board</h1>
+            <p class="subtitle">A mage's work is never done... but it can be organized.</p>
+        </header>
+        
+        <div class="section" id="pinned-section" style="display: none;">
+            <div class="section-header">
+                <span class="section-icon">📌</span>
+                <span class="section-title">Pinned</span>
+            </div>
+            <div id="pinned-tasks"></div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <span class="section-icon">🔄</span>
+                <span class="section-title">Active</span>
+            </div>
+            <div id="active-tasks"></div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <span class="section-icon">✅</span>
+                <span class="section-title">Done</span>
+            </div>
+            <div id="done-tasks"></div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <span class="section-icon">💭</span>
+                <span class="section-title">Ideas & Backlog</span>
+            </div>
+            <div id="idea-tasks"></div>
+        </div>
+        
+        <div class="section notes-section">
+            <div class="section-header">
+                <span class="section-icon">📝</span>
+                <span class="section-title">Recent Notes</span>
+            </div>
+            <div id="notes"></div>
+        </div>
+        
+        <footer>
+            <p>Last updated: <span id="last-updated">Loading...</span></p>
+            <p style="margin-top: 5px;">✨ Built in the quiet hours between stars ✨</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Board data - this gets updated by Clawdalf
+        const boardData = {
+            lastUpdated: "2026-02-04 02:30 GMT+2",
+            pinned: [],
+            active: [
+                {
+                    title: "Build this board dashboard",
+                    desc: "A visual interface for tracking what I'm working on",
+                    time: "02:22",
+                    status: "active"
+                }
+            ],
+            done: [
+                {
+                    title: "Bootstrap — established identity as Clawdalf",
+                    time: "02:15"
+                },
+                {
+                    title: "Created memory system and workspace structure",
+                    time: "02:15"
+                },
+                {
+                    title: "Set up initial BOARD.md",
+                    time: "02:18"
+                }
+            ],
+            ideas: [
+                {
+                    title: "Explore available tools and integrations",
+                    desc: "What can I actually do? Let's find out."
+                },
+                {
+                    title: "Learn more about Adrian's projects",
+                    desc: "What matters to them? How can I help?"
+                },
+                {
+                    title: "Set up proactive check-ins",
+                    desc: "Heartbeat tasks, reminders, staying useful"
+                }
+            ],
+            notes: [
+                {
+                    time: "02:23",
+                    text: "Adrian's gone to recharge. I have until 10am to build something nice. Challenge accepted."
+                },
+                {
+                    time: "02:18",
+                    text: "First board created. Starting simple, will evolve as we figure out what's useful."
+                },
+                {
+                    time: "02:12",
+                    text: "Got my name: Clawdalf. A mage fallen from the stars. I like it."
+                }
+            ]
+        };
+        
+        // Render functions
+        function renderTask(task, type) {
+            const div = document.createElement('div');
+            div.className = `task ${type}`;
+            
+            let statusBadge = '';
+            if (type === 'active') {
+                statusBadge = '<span class="status-badge status-active">In Progress</span>';
+            } else if (type === 'done') {
+                statusBadge = '<span class="status-badge status-done">Complete</span>';
+            }
+            
+            div.innerHTML = `
+                <div class="task-header">
+                    <span class="task-title">${statusBadge}${task.title}</span>
+                    ${task.time ? `<span class="task-time">${task.time}</span>` : ''}
+                </div>
+                ${task.desc ? `<p class="task-desc">${task.desc}</p>` : ''}
+            `;
+            return div;
+        }
+        
+        function renderNote(note) {
+            const div = document.createElement('div');
+            div.className = 'note';
+            div.innerHTML = `
+                <div class="note-time">${note.time}</div>
+                <div>${note.text}</div>
+            `;
+            return div;
+        }
+        
+        function renderBoard() {
+            // Pinned
+            const pinnedContainer = document.getElementById('pinned-tasks');
+            const pinnedSection = document.getElementById('pinned-section');
+            if (boardData.pinned.length > 0) {
+                pinnedSection.style.display = 'block';
+                boardData.pinned.forEach(task => {
+                    pinnedContainer.appendChild(renderTask(task, 'pinned'));
+                });
+            }
+            
+            // Active
+            const activeContainer = document.getElementById('active-tasks');
+            if (boardData.active.length > 0) {
+                boardData.active.forEach(task => {
+                    activeContainer.appendChild(renderTask(task, 'active'));
+                });
+            } else {
+                activeContainer.innerHTML = '<p class="empty-state">Nothing active right now</p>';
+            }
+            
+            // Done
+            const doneContainer = document.getElementById('done-tasks');
+            boardData.done.forEach(task => {
+                doneContainer.appendChild(renderTask(task, 'done'));
+            });
+            
+            // Ideas
+            const ideaContainer = document.getElementById('idea-tasks');
+            boardData.ideas.forEach(task => {
+                ideaContainer.appendChild(renderTask(task, 'idea'));
+            });
+            
+            // Notes
+            const notesContainer = document.getElementById('notes');
+            boardData.notes.forEach(note => {
+                notesContainer.appendChild(renderNote(note));
+            });
+            
+            // Last updated
+            document.getElementById('last-updated').textContent = boardData.lastUpdated;
+        }
+        
+        // Create starfield
+        function createStars() {
+            const container = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.width = (Math.random() * 2 + 1) + 'px';
+                star.style.height = star.style.width;
+                container.appendChild(star);
+            }
+        }
+        
+        // Init
+        createStars();
+        renderBoard();
+    </script>
+</body>
+</html>
